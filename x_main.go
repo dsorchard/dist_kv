@@ -1,21 +1,22 @@
 package main
 
 import (
+	"dist_kv"
 	"flag"
 )
 
 func main() {
-	config := loadConfig()
+	config := dist_kv.loadConfig()
 
 	var gossipPort, httpPort int
 	flag.IntVar(&gossipPort, "gossip", config.InternalPort, "port number for gossip protocol")
 	flag.IntVar(&httpPort, "http", config.ExternalPort, "port number for http server")
 	flag.Parse()
 
-	config.Host = GetLocalIP()
+	config.Host = dist_kv.GetLocalIP()
 	config.InternalPort = gossipPort
 	config.ExternalPort = httpPort
 
-	kv := NewDistKV(config)
+	kv := dist_kv.NewDistKV(config)
 	kv.Bootstrap()
 }
