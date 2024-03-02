@@ -1,13 +1,18 @@
 
 ### Reference
 - [Memberlist + KV](https://reintech.io/blog/implementing-distributed-key-value-store-go/)
+- [Swim Ring](https://github.com/hungys/swimring)
 
 ### Run
 
 ```sh
 go build
-./pkg
 ```
+
+```shell
+./dist_kv
+```
+
 
 ```shell
 ./pkg -gossip=9000 -http=9001

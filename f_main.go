@@ -24,6 +24,8 @@ func main() {
 	kv.Bootstrap()
 }
 
+// -----------------Utils -------------------
+
 func GetLocalIP() string {
 	return localIp
 }

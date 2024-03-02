@@ -45,7 +45,7 @@ func (r *HashRing) GetNodes(key string, count int) []string {
 	return nodes
 }
 
-//---------------------------------------------------------
+//------------------------ Sub Classes ---------------------------------
 
 type hasher struct{}
 
