@@ -31,6 +31,6 @@ func (c *Node) Join(seeds []string) error {
 	return err
 }
 
-func (c *Node) NotifyMsg(msg []byte) {
-	// Handle incoming messages for data replication
+func (c *Node) NodeAddress() string {
+	return c.Memberlist.LocalNode().Address()
 }

@@ -28,7 +28,7 @@ func loadConfig() *configuration {
 		//KVSReplicaPoints:   3,
 	}
 
-	data, err := os.ReadFile("pkg/config.yml")
+	data, err := os.ReadFile("/Users/arjunsunilkumar/GolandProjects/0sysdev_dec/dist_kv/pkg/config.yml")
 	if err != nil {
 		log.Fatalf("Cannot load config.yml")
 	}

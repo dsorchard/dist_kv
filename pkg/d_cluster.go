@@ -37,10 +37,10 @@ func NewDistKV(config *configuration) *DistKV {
 func (d *DistKV) Bootstrap() {
 	err := d.node.Join(d.config.BootstrapNodes)
 	if err != nil {
-		log.Fatalf("Failed to join cluster: %v", err)
+		log.Fatalf("Failed to join distKV: %v", err)
 	}
 
-	api := NewAPI(d.node)
+	api := NewAPI(d)
 	api.Run(fmt.Sprintf(":%d", d.config.ExternalPort))
 }
 
