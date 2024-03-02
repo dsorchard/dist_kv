@@ -10,16 +10,16 @@ func main() {
 	config := loadConfig()
 
 	var httpPort, gossipPort int
-	flag.IntVar(&httpPort, "http", config.ExternalPort, "port number for external request")
-	flag.IntVar(&gossipPort, "gossip", config.InternalPort, "port number for internal protocol communication")
+	flag.IntVar(&gossipPort, "gossip", config.InternalPort, "port number for gossip protocol")
+	flag.IntVar(&httpPort, "http", config.ExternalPort, "port number for http server")
 	flag.Parse()
 
 	config.Host = GetLocalIP()
-	config.ExternalPort = httpPort
 	config.InternalPort = gossipPort
+	config.ExternalPort = httpPort
 
 	cluster, err := NewCluster(
-		NewNode(fmt.Sprintf("%s:%d", config.Host, config.InternalPort)),
+		config.InternalPort,
 		NewKeyValueStore(),
 	)
 	if err != nil {
