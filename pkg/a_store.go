@@ -8,7 +8,7 @@ type KVStore struct {
 	data sync.Map
 }
 
-func NewKeyValueStore() *KVStore {
+func NewKVStore() *KVStore {
 	return &KVStore{
 		data: sync.Map{},
 	}

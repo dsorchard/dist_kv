@@ -19,9 +19,7 @@ func NewNode(gossipPort int) (*Node, error) {
 		return nil, err
 	}
 
-	return &Node{
-		Memberlist: list,
-	}, nil
+	return &Node{Memberlist: list}, nil
 }
 
 func (c *Node) Join(seeds []string) error {

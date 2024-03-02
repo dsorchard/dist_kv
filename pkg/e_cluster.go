@@ -18,7 +18,7 @@ func NewDistKV(config *configuration) *DistKV {
 		log.Fatalf("Failed to create node: %v", err)
 	}
 
-	kv := NewKeyValueStore()
+	kv := NewKVStore()
 
 	ring := NewRing()
 
@@ -37,4 +37,8 @@ func (d *DistKV) Bootstrap() {
 
 	api := NewAPI(d.node)
 	api.Run(fmt.Sprintf(":%d", d.config.ExternalPort))
+}
+
+func (d *DistKV) HandleMembershipChange() {
+	//d.node.RegisterEventHandler(d.ring)
 }
