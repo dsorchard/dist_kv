@@ -32,9 +32,10 @@ func (api *API) setupRoutes() {
 func (api *API) getHandler(w http.ResponseWriter, r *http.Request) {
 
 	key := mux.Vars(r)["key"]
-	nodeAddress := api.distKV.ring.GetNode(key)
+	routeNodeAddress := api.distKV.ring.GetNode(key)
 
-	if nodeAddress == api.distKV.node.NodeAddress() {
+	localNodeAddress := api.distKV.node.NodeAddress()
+	if routeNodeAddress == localNodeAddress {
 		value, ok := api.distKV.kv.Get(key)
 		if !ok {
 			http.Error(w, "Key not found", http.StatusNotFound)
@@ -42,12 +43,11 @@ func (api *API) getHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		_, _ = w.Write([]byte(value))
 	} else {
-		// Else - forward the request to the responsible node
-		url := constructURL(nodeAddress, key)
+		url := fmt.Sprintf("http://%s/get/%s", routeNodeAddress, key)
 		resp, err := http.Get(url)
 		if err != nil {
 			// Log the error and return a server error response
-			log.Printf("Error forwarding request to %s: %v", nodeAddress, err)
+			log.Printf("Error forwarding request to %s: %v", routeNodeAddress, err)
 			http.Error(w, "Error forwarding request", http.StatusInternalServerError)
 			return
 		}
@@ -84,7 +84,4 @@ func (api *API) deleteHandler(w http.ResponseWriter, r *http.Request) {
 
 func (api *API) Run(addr string) {
 	_ = http.ListenAndServe(addr, api.router)
-}
-func constructURL(nodeAddress, key string) string {
-	return fmt.Sprintf("%s/%s", nodeAddress, key)
 }

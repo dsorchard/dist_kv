@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/hashicorp/memberlist"
 	"strconv"
 )
@@ -32,5 +33,5 @@ func (c *Node) Join(seeds []string) error {
 }
 
 func (c *Node) NodeAddress() string {
-	return c.Memberlist.LocalNode().Address()
+	return fmt.Sprintf("%s:%d", GetLocalIP(), c.Memberlist.LocalNode().Port)
 }
