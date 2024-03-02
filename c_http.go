@@ -27,7 +27,6 @@ func (api *API) setupRoutes() {
 }
 
 func (api *API) setHandler(w http.ResponseWriter, r *http.Request) {
-	// Handle set request and replicate data
 }
 
 func (api *API) getHandler(w http.ResponseWriter, r *http.Request) {

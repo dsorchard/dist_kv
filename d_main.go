@@ -10,8 +10,8 @@ func main() {
 	config := loadConfig()
 
 	var externalPort, internalPort int
-	flag.IntVar(&externalPort, "export", config.ExternalPort, "port number for external request")
-	flag.IntVar(&internalPort, "inport", config.InternalPort, "port number for internal protocol communication")
+	flag.IntVar(&externalPort, "http", config.ExternalPort, "port number for external request")
+	flag.IntVar(&internalPort, "gossip", config.InternalPort, "port number for internal protocol communication")
 	flag.Parse()
 
 	config.Host = GetLocalIP()
@@ -24,6 +24,11 @@ func main() {
 	)
 	if err != nil {
 		log.Fatalf("Failed to create cluster: %v", err)
+	}
+
+	err = cluster.Join(config.BootstrapNodes)
+	if err != nil {
+		log.Fatalf("Failed to join cluster: %v", err)
 	}
 
 	api := NewAPI(cluster)

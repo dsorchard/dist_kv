@@ -1,44 +1,41 @@
 package main
 
 import (
-	"github.com/op/go-logging"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
+	"log"
+	"os"
 	"strings"
 )
 
-var logger = logging.MustGetLogger("swimring")
-
 type configuration struct {
-	Host         string
-	ExternalPort int `yaml:"ExternalPort"`
-	InternalPort int `yaml:"InternalPort"`
-
+	Host           string
+	ExternalPort   int      `yaml:"ExternalPort"`
+	InternalPort   int      `yaml:"InternalPort"`
+	BootstrapNodes []string `yaml:"BootstrapNodes"`
 	//VirtualNodeSize  int `yaml:"VirtualNodeSize"`
 	//KVSReplicaPoints int `yaml:"KVSReplicaPoints"`
-	BootstrapNodes []string `yaml:"BootstrapNodes"`
 }
 
 func loadConfig() *configuration {
-	logger.Info("Loading configurations from config.yml")
+	log.Printf("Loading configurations from config.yml")
 
 	config := &configuration{
-		Host:         "0.0.0.0",
-		ExternalPort: 7000,
-		InternalPort: 7001,
+		Host:           "0.0.0.0",
+		ExternalPort:   8000,
+		InternalPort:   8001,
+		BootstrapNodes: []string{},
 		//VirtualNodeSize:    5,
 		//KVSReplicaPoints:   3,
-		BootstrapNodes: []string{},
 	}
 
-	data, err := ioutil.ReadFile("config.yml")
+	data, err := os.ReadFile("config.yml")
 	if err != nil {
-		logger.Warning("Cannot load config.yml")
+		log.Fatalf("Cannot load config.yml")
 	}
 
 	err = yaml.Unmarshal(data, config)
 	if err != nil {
-		logger.Error("Fail to unmarshal config.yml")
+		log.Fatalf("Fail to unmarshal config.yml")
 	}
 
 	for i, addr := range config.BootstrapNodes {
