@@ -9,14 +9,14 @@ import (
 func main() {
 	config := loadConfig()
 
-	var externalPort, internalPort int
-	flag.IntVar(&externalPort, "http", config.ExternalPort, "port number for external request")
-	flag.IntVar(&internalPort, "gossip", config.InternalPort, "port number for internal protocol communication")
+	var httpPort, gossipPort int
+	flag.IntVar(&httpPort, "http", config.ExternalPort, "port number for external request")
+	flag.IntVar(&gossipPort, "gossip", config.InternalPort, "port number for internal protocol communication")
 	flag.Parse()
 
 	config.Host = GetLocalIP()
-	config.ExternalPort = externalPort
-	config.InternalPort = internalPort
+	config.ExternalPort = httpPort
+	config.InternalPort = gossipPort
 
 	cluster, err := NewCluster(
 		NewNode(fmt.Sprintf("%s:%d", config.Host, config.InternalPort)),
@@ -32,5 +32,5 @@ func main() {
 	}
 
 	api := NewAPI(cluster)
-	api.Run(fmt.Sprintf(":%d", config.ExternalPort))
+	api.Run(fmt.Sprintf(":%d", httpPort))
 }

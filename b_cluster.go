@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/buraksezer/consistent"
 	"github.com/hashicorp/memberlist"
 )
 
@@ -18,6 +19,7 @@ type Cluster struct {
 	*memberlist.Memberlist
 	LocalNode *Node
 	store     *KeyValueStore
+	Ring      *consistent.Consistent
 }
 
 func NewCluster(localNode *Node, store *KeyValueStore) (*Cluster, error) {

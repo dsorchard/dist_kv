@@ -3,9 +3,9 @@ module dist_kv
 go 1.21
 
 require (
+	github.com/buraksezer/consistent v0.10.0
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/memberlist v0.5.0
-	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	gopkg.in/yaml.v2 v2.4.0
 )
 

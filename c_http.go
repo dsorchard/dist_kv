@@ -30,6 +30,9 @@ func (api *API) setHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) getHandler(w http.ResponseWriter, r *http.Request) {
+	//replicas := api.cluster.Ring.GetClosestN(r.Key, rc.sr.config.KVSReplicaPoints)
+	//resCh := rc.sendRPCRequests(replicas, GetOp, internalReq)
+
 	// Handle get request
 }
 
