@@ -18,6 +18,12 @@ type HashRing struct {
 	ring *consistent.Consistent
 }
 
+type Member string
+
+func (m Member) String() string {
+	return string(m)
+}
+
 func NewRing() *HashRing {
 	cfg := consistent.Config{
 		PartitionCount:    7,
@@ -28,4 +34,12 @@ func NewRing() *HashRing {
 	return &HashRing{
 		ring: consistent.New(nil, cfg),
 	}
+}
+
+func (r *HashRing) AddNode(node string) {
+	r.ring.Add(Member(node))
+}
+
+func (r *HashRing) RemoveNode(node string) {
+	r.ring.Remove(node)
 }

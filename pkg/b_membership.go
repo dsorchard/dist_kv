@@ -9,17 +9,21 @@ type Node struct {
 	*memberlist.Memberlist
 }
 
-func NewNode(gossipPort int) (*Node, error) {
+func NewNode(gossipPort int) (*Node, chan memberlist.NodeEvent, error) {
 	config := memberlist.DefaultLocalConfig()
 	config.Name = GetLocalIP() + ":" + strconv.Itoa(gossipPort)
 	config.BindPort = gossipPort
+	membershipChangeCh := make(chan memberlist.NodeEvent, 16)
+	config.Events = &memberlist.ChannelEventDelegate{
+		Ch: membershipChangeCh,
+	}
 
 	list, err := memberlist.Create(config)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return &Node{Memberlist: list}, nil
+	return &Node{Memberlist: list}, membershipChangeCh, nil
 }
 
 func (c *Node) Join(seeds []string) error {

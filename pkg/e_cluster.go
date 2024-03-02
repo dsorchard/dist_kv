@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/hashicorp/memberlist"
 	"log"
 )
 
@@ -13,7 +14,7 @@ type DistKV struct {
 }
 
 func NewDistKV(config *configuration) *DistKV {
-	node, err := NewNode(config.InternalPort)
+	node, membershipChangeCh, err := NewNode(config.InternalPort)
 	if err != nil {
 		log.Fatalf("Failed to create node: %v", err)
 	}
@@ -22,11 +23,15 @@ func NewDistKV(config *configuration) *DistKV {
 
 	ring := NewRing()
 
-	return &DistKV{
-		node: node,
-		kv:   kv,
-		ring: ring,
+	distKV := DistKV{
+		config: config,
+		node:   node,
+		kv:     kv,
+		ring:   ring,
 	}
+	go distKV.HandleMembershipChange(membershipChangeCh)
+
+	return &distKV
 }
 
 func (d *DistKV) Bootstrap() {
@@ -39,6 +44,20 @@ func (d *DistKV) Bootstrap() {
 	api.Run(fmt.Sprintf(":%d", d.config.ExternalPort))
 }
 
-func (d *DistKV) HandleMembershipChange() {
-	//d.node.RegisterEventHandler(d.ring)
+func (d *DistKV) HandleMembershipChange(membershipChangeCh chan memberlist.NodeEvent) {
+	for {
+		select {
+		case event := <-membershipChangeCh:
+			switch event.Event {
+			case memberlist.NodeJoin:
+				d.ring.AddNode(event.Node.Name)
+				log.Printf("Node joined: %s", event.Node.Name)
+			case memberlist.NodeLeave:
+				d.ring.RemoveNode(event.Node.Name)
+				log.Printf("Node left: %s", event.Node.Name)
+			default:
+				log.Fatalf("Unknown event: %v", event.Event)
+			}
+		}
+	}
 }
