@@ -4,6 +4,7 @@ go 1.21
 
 require (
 	github.com/buraksezer/consistent v0.10.0
+	github.com/cespare/xxhash v1.1.0
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/memberlist v0.5.0
 	gopkg.in/yaml.v2 v2.4.0

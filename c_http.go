@@ -8,10 +8,10 @@ import (
 
 type API struct {
 	router  *mux.Router
-	cluster *Cluster
+	cluster *Node
 }
 
-func NewAPI(cluster *Cluster) *API {
+func NewAPI(cluster *Node) *API {
 	api := &API{
 		router:  mux.NewRouter(),
 		cluster: cluster,
@@ -30,7 +30,7 @@ func (api *API) setHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *API) getHandler(w http.ResponseWriter, r *http.Request) {
-	//replicas := api.cluster.Ring.GetClosestN(r.Key, rc.sr.config.KVSReplicaPoints)
+	//replicas := api.cluster.ring.GetClosestN(r.Key, rc.sr.config.KVSReplicaPoints)
 	//resCh := rc.sendRPCRequests(replicas, GetOp, internalReq)
 
 	// Handle get request

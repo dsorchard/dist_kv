@@ -1,18 +1,15 @@
 package main
 
 import (
-	"github.com/buraksezer/consistent"
 	"github.com/hashicorp/memberlist"
 	"strconv"
 )
 
-type Cluster struct {
+type Node struct {
 	*memberlist.Memberlist
-	store *KeyValueStore
-	Ring  *consistent.Consistent
 }
 
-func NewCluster(gossipPort int, store *KeyValueStore) (*Cluster, error) {
+func NewNode(gossipPort int) (*Node, error) {
 	config := memberlist.DefaultLocalConfig()
 	config.Name = GetLocalIP() + ":" + strconv.Itoa(gossipPort)
 	config.BindPort = gossipPort
@@ -22,17 +19,16 @@ func NewCluster(gossipPort int, store *KeyValueStore) (*Cluster, error) {
 		return nil, err
 	}
 
-	return &Cluster{
+	return &Node{
 		Memberlist: list,
-		store:      store,
 	}, nil
 }
 
-func (c *Cluster) Join(seeds []string) error {
+func (c *Node) Join(seeds []string) error {
 	_, err := c.Memberlist.Join(seeds)
 	return err
 }
 
-func (c *Cluster) NotifyMsg(msg []byte) {
+func (c *Node) NotifyMsg(msg []byte) {
 	// Handle incoming messages for data replication
 }

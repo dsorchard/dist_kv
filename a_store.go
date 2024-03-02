@@ -4,21 +4,21 @@ import (
 	"sync"
 )
 
-type KeyValueStore struct {
+type KVStore struct {
 	data sync.Map
 }
 
-func NewKeyValueStore() *KeyValueStore {
-	return &KeyValueStore{
+func NewKeyValueStore() *KVStore {
+	return &KVStore{
 		data: sync.Map{},
 	}
 }
 
-func (s *KeyValueStore) Set(key string, value string) {
+func (s *KVStore) Set(key string, value string) {
 	s.data.Store(key, value)
 }
 
-func (s *KeyValueStore) Get(key string) (string, bool) {
+func (s *KVStore) Get(key string) (string, bool) {
 	value, ok := s.data.Load(key)
 	if !ok {
 		return "", false
@@ -26,6 +26,6 @@ func (s *KeyValueStore) Get(key string) (string, bool) {
 	return value.(string), true
 }
 
-func (s *KeyValueStore) Delete(key string) {
+func (s *KVStore) Delete(key string) {
 	s.data.Delete(key)
 }
