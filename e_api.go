@@ -19,13 +19,9 @@ func NewAPI(distKV *DistKV) *API {
 		router: mux.NewRouter(),
 		distKV: distKV,
 	}
-	api.setupRoutes()
-	return api
-}
-
-func (api *API) setupRoutes() {
 	api.router.HandleFunc("/put/{key}/{value}", api.setHandler).Methods("POST")
 	api.router.HandleFunc("/get/{key}", api.getHandler).Methods("GET")
+	return api
 }
 
 func (api *API) getHandler(w http.ResponseWriter, r *http.Request) {

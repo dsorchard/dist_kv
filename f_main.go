@@ -4,6 +4,10 @@ import (
 	"flag"
 )
 
+const (
+	localIp = "127.0.0.1"
+)
+
 func main() {
 	config := loadConfig()
 
@@ -18,4 +22,8 @@ func main() {
 
 	kv := NewDistKV(config)
 	kv.Bootstrap()
+}
+
+func GetLocalIP() string {
+	return localIp
 }

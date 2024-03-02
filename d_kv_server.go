@@ -29,7 +29,7 @@ func NewDistKV(config *configuration) *DistKV {
 		kv:     kv,
 		ring:   ring,
 	}
-	go distKV.HandleMembershipChange(membershipChangeCh)
+	go distKV.handleMembershipChange(membershipChangeCh)
 
 	return &distKV
 }
@@ -44,7 +44,7 @@ func (d *DistKV) Bootstrap() {
 	api.Run(fmt.Sprintf(":%d", d.config.ExternalPort))
 }
 
-func (d *DistKV) HandleMembershipChange(membershipChangeCh chan memberlist.NodeEvent) {
+func (d *DistKV) handleMembershipChange(membershipChangeCh chan memberlist.NodeEvent) {
 	for {
 		select {
 		case event := <-membershipChangeCh:
