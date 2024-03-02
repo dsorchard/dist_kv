@@ -15,7 +15,7 @@ go build
 
 
 ```shell
-./pkg -gossip=9000 -http=9001
+./dist_kv -gossip=9000 -http=9001
 ```
 
 ```shell
