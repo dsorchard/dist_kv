@@ -1,5 +1,5 @@
-ExternalPort: 8000
-InternalPort: 8001
+InternalPort: 8000
+ExternalPort: 8001
 VirtualNodeSize: 5
 KVSReplicaPoints: 3
-BootstrapNodes: [":8001"]
+BootstrapNodes: [":8000"]

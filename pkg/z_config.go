@@ -21,8 +21,8 @@ func loadConfig() *configuration {
 
 	config := &configuration{
 		Host:           "0.0.0.0",
-		ExternalPort:   8000,
-		InternalPort:   8001,
+		InternalPort:   8000,
+		ExternalPort:   8001,
 		BootstrapNodes: []string{},
 		//VirtualNodeSize:    5,
 		//KVSReplicaPoints:   3,

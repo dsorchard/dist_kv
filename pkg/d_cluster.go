@@ -48,13 +48,14 @@ func (d *DistKV) HandleMembershipChange(membershipChangeCh chan memberlist.NodeE
 	for {
 		select {
 		case event := <-membershipChangeCh:
+			httpAddress := fmt.Sprintf("%s:%d", GetLocalIP(), event.Node.Port+1)
 			switch event.Event {
 			case memberlist.NodeJoin:
-				d.ring.AddNode(event.Node.Name)
-				log.Printf("Node joined: %s", event.Node.Name)
+				d.ring.AddNode(httpAddress)
+				log.Printf("Node joined: %s", httpAddress)
 			case memberlist.NodeLeave:
-				d.ring.RemoveNode(event.Node.Name)
-				log.Printf("Node left: %s", event.Node.Name)
+				d.ring.RemoveNode(httpAddress)
+				log.Printf("Node left: %s", httpAddress)
 			default:
 				log.Fatalf("Unknown event: %v", event.Event)
 			}

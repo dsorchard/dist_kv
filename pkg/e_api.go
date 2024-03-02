@@ -34,7 +34,7 @@ func (api *API) getHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	routeNodeAddress := api.distKV.ring.GetNode(key)
 
-	localNodeAddress := api.distKV.node.NodeAddress()
+	localNodeAddress := api.distKV.node.NodeHttpAddress()
 	if routeNodeAddress == localNodeAddress {
 		value, ok := api.distKV.kv.Get(key)
 		if !ok {

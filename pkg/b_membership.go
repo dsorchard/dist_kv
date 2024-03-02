@@ -32,6 +32,6 @@ func (c *Node) Join(seeds []string) error {
 	return err
 }
 
-func (c *Node) NodeAddress() string {
-	return fmt.Sprintf("%s:%d", GetLocalIP(), c.Memberlist.LocalNode().Port)
+func (c *Node) NodeHttpAddress() string {
+	return fmt.Sprintf("%s:%d", GetLocalIP(), c.Memberlist.LocalNode().Port+1)
 }
