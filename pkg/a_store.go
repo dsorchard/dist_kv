@@ -25,7 +25,3 @@ func (s *KVStore) Get(key string) (string, bool) {
 	}
 	return value.(string), true
 }
-
-func (s *KVStore) Delete(key string) {
-	s.data.Delete(key)
-}
