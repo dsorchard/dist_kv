@@ -4,7 +4,6 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/hashicorp/memberlist"
 	"os"
-	"strconv"
 )
 
 type Membership interface {
@@ -21,9 +20,9 @@ type GossipMembership struct {
 	membershipChangeCh chan memberlist.NodeEvent
 }
 
-func NewGossipMembership(gossipPort int) (Membership, error) {
+func NewGossipMembership(gossipPort int, httpAddress string) (Membership, error) {
 	config := memberlist.DefaultLocalConfig()
-	config.Name = GetLocalIP() + "@port:" + strconv.Itoa(gossipPort)
+	config.Name = httpAddress
 	config.BindAddr = GetLocalIP()
 	config.BindPort = gossipPort
 	config.LogOutput = NewMemberlistLogger()

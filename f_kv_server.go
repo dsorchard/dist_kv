@@ -22,7 +22,8 @@ type DistKVServer struct {
 }
 
 func NewDistKVServer(config *configuration) *DistKVServer {
-	node, err := NewGossipMembership(config.InternalPort)
+	httpAddress := fmt.Sprintf("%s:%d", GetLocalIP(), config.ExternalPort)
+	node, err := NewGossipMembership(config.InternalPort, httpAddress)
 	if err != nil {
 		distKvLogger.Fatalf("Failed to create node: %v", err)
 	}
@@ -62,8 +63,7 @@ func (d *DistKVServer) handleMembershipChange(membershipChangeCh chan memberlist
 	for {
 		select {
 		case event := <-membershipChangeCh:
-			//TODO: Replace this workaround.
-			httpAddress := fmt.Sprintf("%s:%d", GetLocalIP(), event.Node.Port+1)
+			httpAddress := event.Node.Name
 			switch event.Event {
 			case memberlist.NodeJoin:
 				d.ring.AddNode(httpAddress)
