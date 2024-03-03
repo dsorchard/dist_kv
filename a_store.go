@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 )
@@ -30,7 +31,9 @@ func (s *MemStorageEngine) Set(shard int, key string, value string) {
 		s.Shards[shard] = &sync.Map{}
 	}
 	//TODO: remove this Multi Versioning Hack
-	value = fmt.Sprintf("%d:%s", time.Now().Nanosecond(), value)
+	if !strings.Contains(value, ":") {
+		value = fmt.Sprintf("%d:%s", time.Now().Nanosecond(), value)
+	}
 	s.Shards[shard].Store(key, value)
 }
 

@@ -103,10 +103,10 @@ func (c *HttpClient) Get(key string) (string, error) {
 // PutShard sends a shard to the replicas
 // TODO: analyze if this will result in duplicates
 func (c *HttpClient) PutShard(shardId int, shard map[string]string) error {
-	members := c.ring.ResolveNodesForPartition(shardId, c.ring.ReplicationFactor())
+	replicas := c.ring.ResolveNodesForPartition(shardId, c.ring.ReplicationFactor())
 	results := make([]string, 0)
-	for _, member := range members {
-		url := fmt.Sprintf("http://%s/shard/%d", member, shardId)
+	for _, replica := range replicas {
+		url := fmt.Sprintf("http://%s/shards/%d", replica, shardId)
 
 		jsonData, err := json.Marshal(shard)
 		if err != nil {
@@ -121,7 +121,7 @@ func (c *HttpClient) PutShard(shardId int, shard map[string]string) error {
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
-			continue
+			return err
 		}
 		defer resp.Body.Close()
 

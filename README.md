@@ -34,6 +34,7 @@ curl -Ss -XPOST "http://localhost:9001/kv/3/cassie"
 ```shell
 curl -Ss -XGET "http://localhost:8001/shards"
 curl -Ss -XGET "http://localhost:9001/shards"
+curl -Ss -XGET "http://localhost:10001/shards"
 ```
 
 ```shell
