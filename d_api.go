@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/charmbracelet/log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -22,9 +24,14 @@ func NewAPI(distKV *DistKVServer, httpPort int) *HttpAPIServer {
 		distKV:   distKV,
 		httpPort: httpPort,
 	}
-	api.router.HandleFunc("/put/{key}/{value}", api.setHandler).Methods("POST")
-	api.router.HandleFunc("/get/{key}", api.getHandler).Methods("GET")
-	api.router.HandleFunc("/shards", api.shardHandler).Methods("GET")
+	api.router.HandleFunc("/kv/{key}/{value}", api.setKvHandler).Methods("POST")
+	api.router.HandleFunc("/kv/{key}", api.getKvHandler).Methods("GET")
+
+	api.router.HandleFunc("/store/{key}/{value}", api.setStoreHandler).Methods("POST")
+	api.router.HandleFunc("/store/{key}", api.getStoreHandler).Methods("GET")
+
+	api.router.HandleFunc("/shards/{key}", api.setShardHandler).Methods("POST")
+	api.router.HandleFunc("/shards", api.getShardHandler).Methods("GET")
 	return api
 }
 
@@ -37,56 +44,37 @@ func (api *HttpAPIServer) GetAddress() string {
 	return fmt.Sprintf("%s:%d", GetLocalIP(), api.httpPort)
 }
 
-func (api *HttpAPIServer) getHandler(w http.ResponseWriter, r *http.Request) {
+func (api *HttpAPIServer) getKvHandler(w http.ResponseWriter, r *http.Request) {
 
 	key := mux.Vars(r)["key"]
 	routeNodeAddress := api.distKV.ring.ResolveNode(key)
 
-	localNodeAddress := api.GetAddress()
-	if routeNodeAddress == localNodeAddress {
-		shardId := api.distKV.ring.ResolvePartitionID(key)
-		value, ok := api.distKV.store.Get(shardId, key)
-		if !ok {
-			http.Error(w, "Key not found", http.StatusNotFound)
-			return
-		}
-		_, _ = w.Write([]byte(value))
-	} else {
-		client := NewHttpClient(routeNodeAddress)
-		value, err := client.Get(key)
-		if err != nil {
-			httpLogger.Errorf("Error forwarding request to %s: %v", routeNodeAddress, err)
-			http.Error(w, "Error forwarding request", http.StatusInternalServerError)
-			return
-		}
-		_, _ = w.Write([]byte(value))
+	value, err := api.distKV.client.Get(key)
+	if err != nil {
+		httpLogger.Errorf("Error forwarding request to %s: %v", routeNodeAddress, err)
+		http.Error(w, "Error forwarding request", http.StatusInternalServerError)
 		return
 	}
+	_, _ = w.Write([]byte(value))
+	return
 }
 
-func (api *HttpAPIServer) setHandler(w http.ResponseWriter, r *http.Request) {
+func (api *HttpAPIServer) setKvHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	value := mux.Vars(r)["value"]
 
 	routeNodeAddress := api.distKV.ring.ResolveNode(key)
-	localNodeAddress := api.GetAddress()
-	if routeNodeAddress == localNodeAddress {
-		shardId := api.distKV.ring.ResolvePartitionID(key)
-		api.distKV.store.Set(shardId, key, value)
-	} else {
-		client := NewHttpClient(routeNodeAddress)
-		err := client.Put(key, value)
-		if err != nil {
-			httpLogger.Errorf("Error forwarding request to %s: %v", routeNodeAddress, err)
-			http.Error(w, "Error forwarding request", http.StatusInternalServerError)
-			return
-		}
+	err := api.distKV.client.Put(key, value)
+	if err != nil {
+		httpLogger.Errorf("Error forwarding request to %s: %v", routeNodeAddress, err)
+		http.Error(w, "Error forwarding request", http.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 }
 
-func (api *HttpAPIServer) shardHandler(w http.ResponseWriter, r *http.Request) {
+func (api *HttpAPIServer) getShardHandler(w http.ResponseWriter, r *http.Request) {
 
 	shards := api.distKV.store.GetShards()
 	for shardId, shard := range shards {
@@ -96,5 +84,39 @@ func (api *HttpAPIServer) shardHandler(w http.ResponseWriter, r *http.Request) {
 			return true
 		})
 	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func (api *HttpAPIServer) setShardHandler(w http.ResponseWriter, r *http.Request) {
+	shardIdStr := mux.Vars(r)["key"]
+	shardId, _ := strconv.Atoi(shardIdStr)
+
+	var shard map[string]string
+	if err := json.NewDecoder(r.Body).Decode(&shard); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	api.distKV.store.SetShard(shardId, shard)
+	w.WriteHeader(http.StatusOK)
+}
+
+func (api *HttpAPIServer) getStoreHandler(w http.ResponseWriter, r *http.Request) {
+	key := mux.Vars(r)["key"]
+	shardId := api.distKV.ring.ResolvePartitionID(key)
+	value, ok := api.distKV.store.Get(shardId, key)
+	if !ok {
+		http.Error(w, "Key not found", http.StatusNotFound)
+		return
+	}
+	_, _ = w.Write([]byte(value))
+}
+
+func (api *HttpAPIServer) setStoreHandler(w http.ResponseWriter, r *http.Request) {
+	key := mux.Vars(r)["key"]
+	value := mux.Vars(r)["value"]
+	shardId := api.distKV.ring.ResolvePartitionID(key)
+	api.distKV.store.Set(shardId, key, value)
 	w.WriteHeader(http.StatusOK)
 }

@@ -26,9 +26,9 @@ go build
 ```
 
 ```shell
-curl -Ss -XPOST "http://localhost:9001/put/1/alex"
-curl -Ss -XPOST "http://localhost:9001/put/2/benny"
-curl -Ss -XPOST "http://localhost:9001/put/3/cassie"
+curl -Ss -XPOST "http://localhost:9001/kv/1/alex"
+curl -Ss -XPOST "http://localhost:9001/kv/2/benny"
+curl -Ss -XPOST "http://localhost:9001/kv/3/cassie"
 ```
 
 ```shell
@@ -37,7 +37,9 @@ curl -Ss -XGET "http://localhost:9001/shards"
 ```
 
 ```shell
-curl -Ss -XGET "http://localhost:8001/get/1" 
+curl -Ss -XGET "http://localhost:8001/kv/1" 
+curl -Ss -XGET "http://localhost:9001/kv/2" 
+curl -Ss -XGET "http://localhost:8001/kv/3" 
 ```
 
 ### TODO

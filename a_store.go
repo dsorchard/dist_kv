@@ -12,6 +12,7 @@ type StorageEngine interface {
 	GetShards() map[int]*sync.Map
 	GetShard(shard int) map[string]string
 	DeleteShard(shard int)
+	SetShard(shardId int, shard map[string]string)
 }
 
 type MemStorageEngine struct {
@@ -28,8 +29,8 @@ func (s *MemStorageEngine) Set(shard int, key string, value string) {
 	if _, ok := s.Shards[shard]; !ok {
 		s.Shards[shard] = &sync.Map{}
 	}
-	//Multi Versioning Hack
-	key = fmt.Sprintf("%d:%s", time.Now().Nanosecond(), key)
+	//TODO: remove this Multi Versioning Hack
+	value = fmt.Sprintf("%d:%s", time.Now().Nanosecond(), value)
 	s.Shards[shard].Store(key, value)
 }
 
@@ -64,4 +65,10 @@ func (s *MemStorageEngine) GetShard(shard int) map[string]string {
 
 func (s *MemStorageEngine) DeleteShard(shard int) {
 	delete(s.Shards, shard)
+}
+
+func (s *MemStorageEngine) SetShard(shardId int, shard map[string]string) {
+	for key, value := range shard {
+		s.Set(shardId, key, value)
+	}
 }

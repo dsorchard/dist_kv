@@ -13,6 +13,7 @@ type HashRing interface {
 	ResolvePartitionID(key string) int
 	ResolvePartitionOwnerNode(partitionID int) string
 	ReplicationFactor() int
+	ResolveNodesForPartition(partitionID int, count int) []string
 }
 
 type BoundedLoadConsistentHashRing struct {
@@ -69,6 +70,18 @@ func (r *BoundedLoadConsistentHashRing) ResolvePartitionOwnerNode(partitionID in
 
 func (r *BoundedLoadConsistentHashRing) ReplicationFactor() int {
 	return r.replicationFactor
+}
+
+func (r *BoundedLoadConsistentHashRing) ResolveNodesForPartition(partitionID int, count int) []string {
+	members, err := r.ring.GetClosestNForPartition(partitionID, count)
+	if err != nil {
+		return nil
+	}
+	nodes := make([]string, len(members))
+	for i, m := range members {
+		nodes[i] = m.String()
+	}
+	return nodes
 }
 
 //------------------------ Sub Classes ---------------------------------

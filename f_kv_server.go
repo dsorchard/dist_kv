@@ -18,6 +18,7 @@ type DistKVServer struct {
 	ring   HashRing
 	node   Membership
 	api    *HttpAPIServer
+	client Client
 }
 
 func NewDistKVServer(config *configuration) *DistKVServer {
@@ -40,6 +41,8 @@ func NewDistKVServer(config *configuration) *DistKVServer {
 
 	api := NewAPI(&distKV, config.ExternalPort)
 	distKV.api = api
+
+	distKV.client = NewHttpClient(ring, api)
 
 	return &distKV
 }
@@ -81,8 +84,7 @@ func (d *DistKVServer) redistributePartitions() {
 		newOwner := d.ring.ResolvePartitionOwnerNode(partitionId)
 		if newOwner != d.api.GetAddress() {
 			// send to newOwner
-			client := NewHttpClient(newOwner)
-			err := client.PutAll(d.store.GetShard(partitionId))
+			err := d.client.PutShard(partitionId, d.store.GetShard(partitionId))
 			if err != nil {
 				distKvLogger.Fatalf("Failed to redistribute partition %d to %s: %v", partitionId, newOwner, err)
 				continue
