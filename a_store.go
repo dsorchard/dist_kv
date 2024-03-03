@@ -25,3 +25,13 @@ func (s *KVStore) Get(key string) (string, bool) {
 	}
 	return value.(string), true
 }
+
+func (s *KVStore) Delete(key string) {
+	s.data.Delete(key)
+}
+
+func (s *KVStore) Iterate(iterFunc func(key, value string) bool) {
+	s.data.Range(func(k, v interface{}) bool {
+		return iterFunc(k.(string), v.(string))
+	})
+}

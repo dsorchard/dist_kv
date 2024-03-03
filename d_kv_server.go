@@ -52,6 +52,7 @@ func (d *DistKVServer) handleMembershipChange(membershipChangeCh chan memberlist
 			switch event.Event {
 			case memberlist.NodeJoin:
 				d.ring.AddNode(httpAddress)
+				d.redistributeKeys(httpAddress)
 				log.Printf("Node joined: %s", httpAddress)
 			case memberlist.NodeLeave:
 				d.ring.RemoveNode(httpAddress)
@@ -61,4 +62,15 @@ func (d *DistKVServer) handleMembershipChange(membershipChangeCh chan memberlist
 			}
 		}
 	}
+}
+
+func (d *DistKVServer) redistributeKeys(address string) {
+	d.kv.Iterate(func(key, value string) bool {
+		newOwner := d.ring.GetNode(key)
+		if newOwner != d.config.Host {
+			d.kv.Delete(key)
+			// send to newOwner
+		}
+		return true
+	})
 }
