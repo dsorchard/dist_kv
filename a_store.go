@@ -4,30 +4,50 @@ import (
 	"sync"
 )
 
-type KVStore struct {
-	Data map[int]*sync.Map // Use a pointer to sync.Map
+type StorageEngine interface {
+	Set(shard int, key string, value string)
+	Get(shard int, key string) (string, bool)
+	GetShard(shard int) *sync.Map
+	DeleteShard(shard int)
+	GetShards() map[int]*sync.Map
 }
 
-func NewKVStore() *KVStore {
-	return &KVStore{
-		Data: make(map[int]*sync.Map), // Initialize the map
+type MemStorageEngine struct {
+	Shards map[int]*sync.Map
+}
+
+func NewMemStorageEngine() StorageEngine {
+	return &MemStorageEngine{
+		Shards: make(map[int]*sync.Map),
 	}
 }
 
-func (s *KVStore) Set(shard int, key string, value string) {
-	if _, ok := s.Data[shard]; !ok {
-		s.Data[shard] = &sync.Map{}
+func (s *MemStorageEngine) Set(shard int, key string, value string) {
+	if _, ok := s.Shards[shard]; !ok {
+		s.Shards[shard] = &sync.Map{}
 	}
-	s.Data[shard].Store(key, value)
+	s.Shards[shard].Store(key, value)
 }
 
-func (s *KVStore) Get(shard int, key string) (string, bool) {
-	if _, ok := s.Data[shard]; !ok {
+func (s *MemStorageEngine) Get(shard int, key string) (string, bool) {
+	if _, ok := s.Shards[shard]; !ok {
 		return "", false
 	}
-	value, ok := s.Data[shard].Load(key)
+	value, ok := s.Shards[shard].Load(key)
 	if !ok {
 		return "", false
 	}
 	return value.(string), true
+}
+
+func (s *MemStorageEngine) GetShard(shard int) *sync.Map {
+	return s.Shards[shard]
+}
+
+func (s *MemStorageEngine) DeleteShard(shard int) {
+	delete(s.Shards, shard)
+}
+
+func (s *MemStorageEngine) GetShards() map[int]*sync.Map {
+	return s.Shards
 }

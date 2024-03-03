@@ -1,16 +1,25 @@
 package main
 
 import (
-	"fmt"
 	"github.com/hashicorp/memberlist"
 	"strconv"
 )
 
-type GossipNode struct {
-	*memberlist.Memberlist
+type Membership interface {
+	Join(existing []string) error
+	MembershipChangeCh() chan memberlist.NodeEvent
 }
 
-func NewNode(gossipPort int) (*GossipNode, chan memberlist.NodeEvent, error) {
+// GossipMembership is a membership implementation using hashicorp/memberlist
+// It could be EtcdMembership as well as done in JunoDB
+type GossipMembership struct {
+	membershipList     *memberlist.Memberlist
+	hostName           string
+	gossipPort         int
+	membershipChangeCh chan memberlist.NodeEvent
+}
+
+func NewGossipMembership(gossipPort int) (Membership, error) {
 	config := memberlist.DefaultLocalConfig()
 	config.Name = GetLocalIP() + ":" + strconv.Itoa(gossipPort)
 	config.BindPort = gossipPort
@@ -19,19 +28,22 @@ func NewNode(gossipPort int) (*GossipNode, chan memberlist.NodeEvent, error) {
 		Ch: membershipChangeCh,
 	}
 
-	list, err := memberlist.Create(config)
+	membershipList, err := memberlist.Create(config)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return &GossipNode{Memberlist: list}, membershipChangeCh, nil
+	return &GossipMembership{
+		membershipList:     membershipList,
+		membershipChangeCh: membershipChangeCh,
+	}, nil
 }
 
-func (c *GossipNode) Join(existing []string) error {
-	_, err := c.Memberlist.Join(existing)
+func (c *GossipMembership) Join(existing []string) error {
+	_, err := c.membershipList.Join(existing)
 	return err
 }
 
-func (c *GossipNode) NodeHttpAddress() string {
-	return fmt.Sprintf("%s:%d", GetLocalIP(), c.Memberlist.LocalNode().Port+1)
+func (c *GossipMembership) MembershipChangeCh() chan memberlist.NodeEvent {
+	return c.membershipChangeCh
 }

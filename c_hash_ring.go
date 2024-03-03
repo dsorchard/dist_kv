@@ -5,50 +5,46 @@ import (
 	"github.com/cespare/xxhash"
 )
 
-type HashRing struct {
+type HashRing interface {
+	AddNode(node string)
+	RemoveNode(node string)
+	ResolveNode(key string) string
+	ResolveNodes(key string, count int) []string
+	ResolvePartitionID(key string) int
+	ResolvePartitionOwnerNode(partitionID int) string
+}
+
+type BoundedLoadConsistentHashRing struct {
 	ring *consistent.Consistent
 }
 
-/*
-- PartitionCount: This should be significantly higher than the number of servers
-to ensure a fine-grained distribution. A common approach is to use a multiple
-of the number of servers. For example, with 10 servers, you might use 100 or 200
-partitions, depending on your specific requirements for granularity and the overhead of managing more partitions.
-
-- ReplicationFactor: Set this to 3, as you want each key to be replicated
-three times and stored on different servers.
-
-- Load: The ideal value for Load depends on your system's characteristics,
-but a starting point might be 1.25 or 1.5. This means a server can be
-25% or 50% more loaded than the average before the system redistributes
-keys to balance the load.
-*/
-
-func NewRing(partitionCount, replicationFactor int) *HashRing {
+func NewBoundedLoadConsistentHashRing(partitionCount, replicationFactor int) HashRing {
 	cfg := consistent.Config{
-		PartitionCount:    partitionCount, // virtual node count
-		ReplicationFactor: replicationFactor,
-		Load:              1.25,
+		PartitionCount:    partitionCount,    // virtual node count
+		ReplicationFactor: replicationFactor, // number of replicas for each key
+		Load:              1.25,              // server can be 25% > average before the system redistributes
 		Hasher:            hasher{},
 	}
-	return &HashRing{
+	return &BoundedLoadConsistentHashRing{
 		ring: consistent.New(nil, cfg),
 	}
 }
 
-func (r *HashRing) AddNode(node string) {
+func (r *BoundedLoadConsistentHashRing) AddNode(node string) {
 	r.ring.Add(member(node))
 }
 
-func (r *HashRing) RemoveNode(node string) {
+func (r *BoundedLoadConsistentHashRing) RemoveNode(node string) {
 	r.ring.Remove(node)
 }
 
-func (r *HashRing) GetNode(key string) string {
+func (r *BoundedLoadConsistentHashRing) ResolveNode(key string) string {
 	return r.ring.LocateKey([]byte(key)).String()
 }
 
-func (r *HashRing) GetNodes(key string, count int) []string {
+// ResolveNodes returns the closest N nodes to the key in the ring.
+// TODO: Will be used for replication.
+func (r *BoundedLoadConsistentHashRing) ResolveNodes(key string, count int) []string {
 	members, err := r.ring.GetClosestN([]byte(key), count)
 	if err != nil {
 		return nil
@@ -60,11 +56,11 @@ func (r *HashRing) GetNodes(key string, count int) []string {
 	return nodes
 }
 
-func (r *HashRing) FindPartitionID(key string) int {
+func (r *BoundedLoadConsistentHashRing) ResolvePartitionID(key string) int {
 	return r.ring.FindPartitionID([]byte(key))
 }
 
-func (r *HashRing) GetPartitionOwner(partitionID int) string {
+func (r *BoundedLoadConsistentHashRing) ResolvePartitionOwnerNode(partitionID int) string {
 	return r.ring.GetPartitionOwner(partitionID).String()
 }
 

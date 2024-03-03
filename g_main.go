@@ -4,10 +4,6 @@ import (
 	"flag"
 )
 
-const (
-	localIp = "127.0.0.1"
-)
-
 func main() {
 	config := loadConfig()
 
@@ -25,7 +21,3 @@ func main() {
 }
 
 // -----------------Utils -------------------
-
-func GetLocalIP() string {
-	return localIp
-}
