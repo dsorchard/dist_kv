@@ -8,14 +8,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type API struct {
+type HttpAPIServer struct {
 	router   *mux.Router
 	distKV   *DistKVServer
 	httpPort int
 }
 
-func NewAPI(distKV *DistKVServer, httpPort int) *API {
-	api := &API{
+func NewAPI(distKV *DistKVServer, httpPort int) *HttpAPIServer {
+	api := &HttpAPIServer{
 		router:   mux.NewRouter(),
 		distKV:   distKV,
 		httpPort: httpPort,
@@ -25,16 +25,16 @@ func NewAPI(distKV *DistKVServer, httpPort int) *API {
 	return api
 }
 
-func (api *API) Run() {
+func (api *HttpAPIServer) Run() {
 	addr := fmt.Sprintf(":%d", api.httpPort)
 	_ = http.ListenAndServe(addr, api.router)
 }
 
-func (api *API) GetAddress() string {
+func (api *HttpAPIServer) GetAddress() string {
 	return fmt.Sprintf("%s:%d", GetLocalIP(), api.httpPort)
 }
 
-func (api *API) getHandler(w http.ResponseWriter, r *http.Request) {
+func (api *HttpAPIServer) getHandler(w http.ResponseWriter, r *http.Request) {
 
 	key := mux.Vars(r)["key"]
 	routeNodeAddress := api.distKV.ring.ResolveNode(key)
@@ -42,14 +42,14 @@ func (api *API) getHandler(w http.ResponseWriter, r *http.Request) {
 	localNodeAddress := api.GetAddress()
 	if routeNodeAddress == localNodeAddress {
 		shardId := api.distKV.ring.ResolvePartitionID(key)
-		value, ok := api.distKV.kv.Get(shardId, key)
+		value, ok := api.distKV.store.Get(shardId, key)
 		if !ok {
 			http.Error(w, "Key not found", http.StatusNotFound)
 			return
 		}
 		_, _ = w.Write([]byte(value))
 	} else {
-		client := NewClient(routeNodeAddress)
+		client := NewHttpClient(routeNodeAddress)
 		value, err := client.Get(key)
 		if err != nil {
 			log.Printf("Error forwarding request to %s: %v", routeNodeAddress, err)
@@ -61,7 +61,7 @@ func (api *API) getHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (api *API) setHandler(w http.ResponseWriter, r *http.Request) {
+func (api *HttpAPIServer) setHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	value := mux.Vars(r)["value"]
 
@@ -69,9 +69,9 @@ func (api *API) setHandler(w http.ResponseWriter, r *http.Request) {
 	localNodeAddress := api.GetAddress()
 	if routeNodeAddress == localNodeAddress {
 		shardId := api.distKV.ring.ResolvePartitionID(key)
-		api.distKV.kv.Set(shardId, key, value)
+		api.distKV.store.Set(shardId, key, value)
 	} else {
-		client := NewClient(routeNodeAddress)
+		client := NewHttpClient(routeNodeAddress)
 		err := client.Put(key, value)
 		if err != nil {
 			log.Printf("Error forwarding request to %s: %v", routeNodeAddress, err)

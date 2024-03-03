@@ -11,7 +11,7 @@ import (
 
 type DistKVServer struct {
 	config *configuration
-	kv     StorageEngine
+	store  StorageEngine
 	ring   HashRing
 	node   Membership
 }
@@ -30,7 +30,7 @@ func NewDistKVServer(config *configuration) *DistKVServer {
 	distKV := DistKVServer{
 		config: config,
 		node:   node,
-		kv:     kv,
+		store:  kv,
 		ring:   ring,
 	}
 	go distKV.handleMembershipChange(membershipChangeCh)
@@ -69,15 +69,15 @@ func (d *DistKVServer) handleMembershipChange(membershipChangeCh chan memberlist
 }
 
 func (d *DistKVServer) redistributePartitions(address string) {
-	for partitionId, partitionContent := range d.kv.GetShards() {
+	for partitionId, partitionContent := range d.store.GetShards() {
 		newOwner := d.ring.ResolvePartitionOwnerNode(partitionId)
 		if newOwner != d.config.Host {
-			d.kv.DeleteShard(partitionId)
-
 			// send to newOwner
 			//TODO: do later
 			log.Printf("Redistributing partition %d to %s", partitionId, newOwner)
 			log.Printf("Partition content: %v", partitionContent)
+
+			d.store.DeleteShard(partitionId)
 		}
 	}
 }

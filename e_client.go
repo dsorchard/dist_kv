@@ -7,17 +7,17 @@ import (
 	"net/http"
 )
 
-type Client struct {
+type HttpClient struct {
 	address string
 }
 
-func NewClient(address string) *Client {
-	return &Client{
+func NewHttpClient(address string) *HttpClient {
+	return &HttpClient{
 		address: address,
 	}
 }
 
-func (c *Client) Put(key string, value string) error {
+func (c *HttpClient) Put(key string, value string) error {
 	url := fmt.Sprintf("http://%s/put/%s/%s", c.address, key, value)
 	resp, err := http.Post(url, "", nil)
 	if err != nil {
@@ -31,7 +31,7 @@ func (c *Client) Put(key string, value string) error {
 	return nil
 }
 
-func (c *Client) Get(key string) (string, error) {
+func (c *HttpClient) Get(key string) (string, error) {
 	url := fmt.Sprintf("http://%s/get/%s", c.address, key)
 	resp, err := http.Get(url)
 	if err != nil {
