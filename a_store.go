@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"sync"
+	"time"
 )
 
 type StorageEngine interface {
@@ -26,6 +28,8 @@ func (s *MemStorageEngine) Set(shard int, key string, value string) {
 	if _, ok := s.Shards[shard]; !ok {
 		s.Shards[shard] = &sync.Map{}
 	}
+	//Multi Versioning Hack
+	key = fmt.Sprintf("%d:%s", time.Now().Nanosecond(), key)
 	s.Shards[shard].Store(key, value)
 }
 
