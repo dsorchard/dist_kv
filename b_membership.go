@@ -21,8 +21,10 @@ type GossipMembership struct {
 
 func NewGossipMembership(gossipPort int) (Membership, error) {
 	config := memberlist.DefaultLocalConfig()
-	config.Name = GetLocalIP() + ":" + strconv.Itoa(gossipPort)
+	config.Name = GetLocalIP() + "@port:" + strconv.Itoa(gossipPort)
+	config.BindAddr = GetLocalIP()
 	config.BindPort = gossipPort
+
 	membershipChangeCh := make(chan memberlist.NodeEvent, 16)
 	config.Events = &memberlist.ChannelEventDelegate{
 		Ch: membershipChangeCh,

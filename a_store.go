@@ -7,13 +7,13 @@ import (
 type StorageEngine interface {
 	Set(shard int, key string, value string)
 	Get(shard int, key string) (string, bool)
-	GetShard(shard int) *sync.Map
-	DeleteShard(shard int)
 	GetShards() map[int]*sync.Map
+	GetShard(shard int) map[string]string
+	DeleteShard(shard int)
 }
 
 type MemStorageEngine struct {
-	Shards map[int]*sync.Map
+	Shards map[int]*sync.Map // Each Shard is a Virtual Node.
 }
 
 func NewMemStorageEngine() StorageEngine {
@@ -40,14 +40,24 @@ func (s *MemStorageEngine) Get(shard int, key string) (string, bool) {
 	return value.(string), true
 }
 
-func (s *MemStorageEngine) GetShard(shard int) *sync.Map {
-	return s.Shards[shard]
+func (s *MemStorageEngine) GetShards() map[int]*sync.Map {
+	return s.Shards
+}
+
+// GetShard returns a map of key-value pairs for the given shard
+// In the case of RocksDB etc., it could be a snapshot file.
+func (s *MemStorageEngine) GetShard(shard int) map[string]string {
+	if _, ok := s.Shards[shard]; !ok {
+		return nil
+	}
+	shardMap := make(map[string]string)
+	s.Shards[shard].Range(func(key, value interface{}) bool {
+		shardMap[key.(string)] = value.(string)
+		return true
+	})
+	return shardMap
 }
 
 func (s *MemStorageEngine) DeleteShard(shard int) {
 	delete(s.Shards, shard)
-}
-
-func (s *MemStorageEngine) GetShards() map[int]*sync.Map {
-	return s.Shards
 }

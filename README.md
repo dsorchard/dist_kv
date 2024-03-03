@@ -2,6 +2,8 @@
 ### Reference
 - [Memberlist + KV](https://reintech.io/blog/implementing-distributed-key-value-store-go/)
 - [Swim Ring](https://github.com/hungys/swimring)
+- [Paypal JunoDB](https://github.com/paypal/junodb)
+- [Uber RingPop](https://github.com/uber/ringpop-go)
 
 ### Run
 
@@ -16,6 +18,10 @@ go build
 
 ```shell
 ./dist_kv -gossip=9000 -http=9001
+```
+
+```shell
+./dist_kv -gossip=10000 -http=10001
 ```
 
 ```shell

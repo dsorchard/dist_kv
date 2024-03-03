@@ -18,11 +18,11 @@ type BoundedLoadConsistentHashRing struct {
 	ring *consistent.Consistent
 }
 
-func NewBoundedLoadConsistentHashRing(partitionCount, replicationFactor int) HashRing {
+func NewBoundedLoadConsistentHashRing(virtualNodeCount, replicationFactorForEachKey int) HashRing {
 	cfg := consistent.Config{
-		PartitionCount:    partitionCount,    // virtual node count
-		ReplicationFactor: replicationFactor, // number of replicas for each key
-		Load:              1.25,              // server can be 25% > average before the system redistributes
+		PartitionCount:    virtualNodeCount,            // virtual node count
+		ReplicationFactor: replicationFactorForEachKey, // number of replicas for each key
+		Load:              1.25,                        // server can be 25% > average before the system redistributes
 		Hasher:            hasher{},
 	}
 	return &BoundedLoadConsistentHashRing{

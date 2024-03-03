@@ -31,6 +31,16 @@ func (c *HttpClient) Put(key string, value string) error {
 	return nil
 }
 
+func (c *HttpClient) PutAll(kv map[string]string) error {
+	for k, v := range kv {
+		err := c.Put(k, v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (c *HttpClient) Get(key string) (string, error) {
 	url := fmt.Sprintf("http://%s/get/%s", c.address, key)
 	resp, err := http.Get(url)

@@ -18,7 +18,6 @@ type DistKVServer struct {
 
 func NewDistKVServer(config *configuration) *DistKVServer {
 	node, err := NewGossipMembership(config.InternalPort)
-	membershipChangeCh := node.MembershipChangeCh()
 	if err != nil {
 		log.Fatalf("Failed to create node: %v", err)
 	}
@@ -33,7 +32,7 @@ func NewDistKVServer(config *configuration) *DistKVServer {
 		store:  kv,
 		ring:   ring,
 	}
-	go distKV.handleMembershipChange(membershipChangeCh)
+	go distKV.handleMembershipChange(node.MembershipChangeCh())
 
 	return &distKV
 }
@@ -69,14 +68,15 @@ func (d *DistKVServer) handleMembershipChange(membershipChangeCh chan memberlist
 }
 
 func (d *DistKVServer) redistributePartitions(address string) {
-	for partitionId, partitionContent := range d.store.GetShards() {
+	for partitionId := range d.store.GetShards() {
 		newOwner := d.ring.ResolvePartitionOwnerNode(partitionId)
 		if newOwner != d.config.Host {
 			// send to newOwner
-			//TODO: do later
+			client := NewHttpClient(newOwner)
+			_ = client.PutAll(d.store.GetShard(partitionId))
 			log.Printf("Redistributing partition %d to %s", partitionId, newOwner)
-			log.Printf("Partition content: %v", partitionContent)
 
+			// delete from old owner
 			d.store.DeleteShard(partitionId)
 		}
 	}
