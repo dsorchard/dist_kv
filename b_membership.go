@@ -65,6 +65,6 @@ func NewMemberlistLogger() MemberlistLogger {
 }
 
 func (l MemberlistLogger) Write(p []byte) (n int, err error) {
-	l.Logger.Info(string(p))
+	l.Logger.Debugf(string(p))
 	return len(p), nil
 }
