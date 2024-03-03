@@ -31,7 +31,8 @@ func (api *API) getHandler(w http.ResponseWriter, r *http.Request) {
 
 	localNodeAddress := api.distKV.node.NodeHttpAddress()
 	if routeNodeAddress == localNodeAddress {
-		value, ok := api.distKV.kv.Get(key)
+		shardId := api.distKV.ring.FindPartitionID(key)
+		value, ok := api.distKV.kv.Get(shardId, key)
 		if !ok {
 			http.Error(w, "Key not found", http.StatusNotFound)
 			return
@@ -77,7 +78,8 @@ func (api *API) setHandler(w http.ResponseWriter, r *http.Request) {
 	routeNodeAddress := api.distKV.ring.GetNode(key)
 	localNodeAddress := api.distKV.node.NodeHttpAddress()
 	if routeNodeAddress == localNodeAddress {
-		api.distKV.kv.Set(key, value)
+		shardId := api.distKV.ring.FindPartitionID(key)
+		api.distKV.kv.Set(shardId, key, value)
 		w.WriteHeader(http.StatusOK)
 	} else {
 		url := fmt.Sprintf("http://%s/put/%s/%s", routeNodeAddress, key, value)

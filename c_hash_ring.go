@@ -26,7 +26,7 @@ keys to balance the load.
 
 func NewRing(partitionCount, replicationFactor int) *HashRing {
 	cfg := consistent.Config{
-		PartitionCount:    partitionCount, // micro shards
+		PartitionCount:    partitionCount, // virtual node count
 		ReplicationFactor: replicationFactor,
 		Load:              1.25,
 		Hasher:            hasher{},
@@ -58,6 +58,14 @@ func (r *HashRing) GetNodes(key string, count int) []string {
 		nodes[i] = m.String()
 	}
 	return nodes
+}
+
+func (r *HashRing) FindPartitionID(key string) int {
+	return r.ring.FindPartitionID([]byte(key))
+}
+
+func (r *HashRing) GetPartitionOwner(partitionID int) string {
+	return r.ring.GetPartitionOwner(partitionID).String()
 }
 
 //------------------------ Sub Classes ---------------------------------

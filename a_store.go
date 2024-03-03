@@ -5,33 +5,29 @@ import (
 )
 
 type KVStore struct {
-	data sync.Map
+	Data map[int]*sync.Map // Use a pointer to sync.Map
 }
 
 func NewKVStore() *KVStore {
 	return &KVStore{
-		data: sync.Map{},
+		Data: make(map[int]*sync.Map), // Initialize the map
 	}
 }
 
-func (s *KVStore) Set(key string, value string) {
-	s.data.Store(key, value)
+func (s *KVStore) Set(shard int, key string, value string) {
+	if _, ok := s.Data[shard]; !ok {
+		s.Data[shard] = &sync.Map{}
+	}
+	s.Data[shard].Store(key, value)
 }
 
-func (s *KVStore) Get(key string) (string, bool) {
-	value, ok := s.data.Load(key)
+func (s *KVStore) Get(shard int, key string) (string, bool) {
+	if _, ok := s.Data[shard]; !ok {
+		return "", false
+	}
+	value, ok := s.Data[shard].Load(key)
 	if !ok {
 		return "", false
 	}
 	return value.(string), true
-}
-
-func (s *KVStore) Delete(key string) {
-	s.data.Delete(key)
-}
-
-func (s *KVStore) Iterate(iterFunc func(key, value string) bool) {
-	s.data.Range(func(k, v interface{}) bool {
-		return iterFunc(k.(string), v.(string))
-	})
 }
