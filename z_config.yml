@@ -1,5 +1,5 @@
 InternalPort: 8000
 ExternalPort: 8001
-PartitionCount: 30
+PartitionCount: 60
 KeyReplicationCount: 3
 BootstrapNodes: [":8000"]
