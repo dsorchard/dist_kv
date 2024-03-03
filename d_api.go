@@ -24,6 +24,7 @@ func NewAPI(distKV *DistKVServer, httpPort int) *HttpAPIServer {
 	}
 	api.router.HandleFunc("/put/{key}/{value}", api.setHandler).Methods("POST")
 	api.router.HandleFunc("/get/{key}", api.getHandler).Methods("GET")
+	api.router.HandleFunc("/shards", api.shardHandler).Methods("GET")
 	return api
 }
 
@@ -82,5 +83,18 @@ func (api *HttpAPIServer) setHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	w.WriteHeader(http.StatusOK)
+}
+
+func (api *HttpAPIServer) shardHandler(w http.ResponseWriter, r *http.Request) {
+
+	shards := api.distKV.store.GetShards()
+	for shardId, shard := range shards {
+		httpLogger.Warnf("Shard %d", shardId)
+		shard.Range(func(key, value interface{}) bool {
+			httpLogger.Warnf("Key: %s, Value: %s", key, value)
+			return true
+		})
+	}
 	w.WriteHeader(http.StatusOK)
 }

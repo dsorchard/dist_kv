@@ -17,6 +17,7 @@ type DistKVServer struct {
 	store  StorageEngine
 	ring   HashRing
 	node   Membership
+	api    *HttpAPIServer
 }
 
 func NewDistKVServer(config *configuration) *DistKVServer {
@@ -37,23 +38,28 @@ func NewDistKVServer(config *configuration) *DistKVServer {
 	}
 	go distKV.handleMembershipChange(node.MembershipChangeCh())
 
+	api := NewAPI(&distKV, config.ExternalPort)
+	distKV.api = api
+
 	return &distKV
 }
 
 func (d *DistKVServer) Bootstrap() {
+	// Join the gossip network
 	err := d.node.Join(d.config.BootstrapNodes)
 	if err != nil {
 		distKvLogger.Fatalf("Failed to join distKV: %v", err)
 	}
 
-	api := NewAPI(d, d.config.ExternalPort)
-	api.Run()
+	// Start the HTTP API server
+	d.api.Run()
 }
 
 func (d *DistKVServer) handleMembershipChange(membershipChangeCh chan memberlist.NodeEvent) {
 	for {
 		select {
 		case event := <-membershipChangeCh:
+			//TODO: Replace this workaround.
 			httpAddress := fmt.Sprintf("%s:%d", GetLocalIP(), event.Node.Port+1)
 			switch event.Event {
 			case memberlist.NodeJoin:
@@ -73,7 +79,7 @@ func (d *DistKVServer) handleMembershipChange(membershipChangeCh chan memberlist
 func (d *DistKVServer) redistributePartitions() {
 	for partitionId := range d.store.GetShards() {
 		newOwner := d.ring.ResolvePartitionOwnerNode(partitionId)
-		if newOwner != d.config.Host {
+		if newOwner != d.api.GetAddress() {
 			// send to newOwner
 			client := NewHttpClient(newOwner)
 			err := client.PutAll(d.store.GetShard(partitionId))
