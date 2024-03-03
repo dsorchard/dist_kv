@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/charmbracelet/log"
 	"github.com/hashicorp/memberlist"
+	"os"
 	"strconv"
 )
 
@@ -60,7 +61,9 @@ type MemberlistLogger struct {
 
 func NewMemberlistLogger() MemberlistLogger {
 	return MemberlistLogger{
-		Logger: log.WithPrefix("memberlist"),
+		Logger: log.NewWithOptions(os.Stderr, log.Options{
+			Prefix: "memberlist",
+		}),
 	}
 }
 
