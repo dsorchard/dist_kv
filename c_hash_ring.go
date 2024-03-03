@@ -12,10 +12,12 @@ type HashRing interface {
 	ResolveNodes(key string, count int) []string
 	ResolvePartitionID(key string) int
 	ResolvePartitionOwnerNode(partitionID int) string
+	ReplicationFactor() int
 }
 
 type BoundedLoadConsistentHashRing struct {
-	ring *consistent.Consistent
+	ring              *consistent.Consistent
+	replicationFactor int
 }
 
 func NewBoundedLoadConsistentHashRing(virtualNodeCount, replicationFactorForEachKey int) HashRing {
@@ -26,7 +28,8 @@ func NewBoundedLoadConsistentHashRing(virtualNodeCount, replicationFactorForEach
 		Hasher:            hasher{},
 	}
 	return &BoundedLoadConsistentHashRing{
-		ring: consistent.New(nil, cfg),
+		ring:              consistent.New(nil, cfg),
+		replicationFactor: replicationFactorForEachKey,
 	}
 }
 
@@ -62,6 +65,10 @@ func (r *BoundedLoadConsistentHashRing) ResolvePartitionID(key string) int {
 
 func (r *BoundedLoadConsistentHashRing) ResolvePartitionOwnerNode(partitionID int) string {
 	return r.ring.GetPartitionOwner(partitionID).String()
+}
+
+func (r *BoundedLoadConsistentHashRing) ReplicationFactor() int {
+	return r.replicationFactor
 }
 
 //------------------------ Sub Classes ---------------------------------
