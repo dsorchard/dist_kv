@@ -11,7 +11,7 @@ type HashRing struct {
 
 func NewRing() *HashRing {
 	cfg := consistent.Config{
-		PartitionCount:    7,
+		PartitionCount:    7, // micro shards
 		ReplicationFactor: 20,
 		Load:              1.25,
 		Hasher:            hasher{},
