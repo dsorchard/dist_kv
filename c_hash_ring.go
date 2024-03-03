@@ -9,10 +9,25 @@ type HashRing struct {
 	ring *consistent.Consistent
 }
 
-func NewRing() *HashRing {
+/*
+- PartitionCount: This should be significantly higher than the number of servers
+to ensure a fine-grained distribution. A common approach is to use a multiple
+of the number of servers. For example, with 10 servers, you might use 100 or 200
+partitions, depending on your specific requirements for granularity and the overhead of managing more partitions.
+
+- ReplicationFactor: Set this to 3, as you want each key to be replicated
+three times and stored on different servers.
+
+- Load: The ideal value for Load depends on your system's characteristics,
+but a starting point might be 1.25 or 1.5. This means a server can be
+25% or 50% more loaded than the average before the system redistributes
+keys to balance the load.
+*/
+
+func NewRing(partitionCount, replicationFactor int) *HashRing {
 	cfg := consistent.Config{
-		PartitionCount:    7, // micro shards
-		ReplicationFactor: 20,
+		PartitionCount:    partitionCount, // micro shards
+		ReplicationFactor: replicationFactor,
 		Load:              1.25,
 		Hasher:            hasher{},
 	}

@@ -6,14 +6,14 @@ import (
 	"log"
 )
 
-type DistKV struct {
+type DistKVServer struct {
 	config *configuration
-	node   *Node
 	kv     *KVStore
 	ring   *HashRing
+	node   *GossipNode
 }
 
-func NewDistKV(config *configuration) *DistKV {
+func NewDistKVServer(config *configuration) *DistKVServer {
 	node, membershipChangeCh, err := NewNode(config.InternalPort)
 	if err != nil {
 		log.Fatalf("Failed to create node: %v", err)
@@ -21,9 +21,9 @@ func NewDistKV(config *configuration) *DistKV {
 
 	kv := NewKVStore()
 
-	ring := NewRing()
+	ring := NewRing(config.PartitionCount, config.KeyReplicationCount)
 
-	distKV := DistKV{
+	distKV := DistKVServer{
 		config: config,
 		node:   node,
 		kv:     kv,
@@ -34,7 +34,7 @@ func NewDistKV(config *configuration) *DistKV {
 	return &distKV
 }
 
-func (d *DistKV) Bootstrap() {
+func (d *DistKVServer) Bootstrap() {
 	err := d.node.Join(d.config.BootstrapNodes)
 	if err != nil {
 		log.Fatalf("Failed to join distKV: %v", err)
@@ -44,7 +44,7 @@ func (d *DistKV) Bootstrap() {
 	api.Run(fmt.Sprintf(":%d", d.config.ExternalPort))
 }
 
-func (d *DistKV) handleMembershipChange(membershipChangeCh chan memberlist.NodeEvent) {
+func (d *DistKVServer) handleMembershipChange(membershipChangeCh chan memberlist.NodeEvent) {
 	for {
 		select {
 		case event := <-membershipChangeCh:

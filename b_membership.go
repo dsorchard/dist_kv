@@ -6,11 +6,11 @@ import (
 	"strconv"
 )
 
-type Node struct {
+type GossipNode struct {
 	*memberlist.Memberlist
 }
 
-func NewNode(gossipPort int) (*Node, chan memberlist.NodeEvent, error) {
+func NewNode(gossipPort int) (*GossipNode, chan memberlist.NodeEvent, error) {
 	config := memberlist.DefaultLocalConfig()
 	config.Name = GetLocalIP() + ":" + strconv.Itoa(gossipPort)
 	config.BindPort = gossipPort
@@ -24,14 +24,14 @@ func NewNode(gossipPort int) (*Node, chan memberlist.NodeEvent, error) {
 		return nil, nil, err
 	}
 
-	return &Node{Memberlist: list}, membershipChangeCh, nil
+	return &GossipNode{Memberlist: list}, membershipChangeCh, nil
 }
 
-func (c *Node) Join(seeds []string) error {
-	_, err := c.Memberlist.Join(seeds)
+func (c *GossipNode) Join(existing []string) error {
+	_, err := c.Memberlist.Join(existing)
 	return err
 }
 
-func (c *Node) NodeHttpAddress() string {
+func (c *GossipNode) NodeHttpAddress() string {
 	return fmt.Sprintf("%s:%d", GetLocalIP(), c.Memberlist.LocalNode().Port+1)
 }

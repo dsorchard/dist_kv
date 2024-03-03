@@ -20,7 +20,7 @@ func main() {
 	config.InternalPort = gossipPort
 	config.ExternalPort = httpPort
 
-	kv := NewDistKV(config)
+	kv := NewDistKVServer(config)
 	kv.Bootstrap()
 }
 

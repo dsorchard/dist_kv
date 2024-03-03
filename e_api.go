@@ -11,10 +11,10 @@ import (
 
 type API struct {
 	router *mux.Router
-	distKV *DistKV
+	distKV *DistKVServer
 }
 
-func NewAPI(distKV *DistKV) *API {
+func NewAPI(distKV *DistKVServer) *API {
 	api := &API{
 		router: mux.NewRouter(),
 		distKV: distKV,
