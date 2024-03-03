@@ -24,12 +24,20 @@ func NewAPI(distKV *DistKVServer, httpPort int) *HttpAPIServer {
 		distKV:   distKV,
 		httpPort: httpPort,
 	}
+	// ::::::::External endpoints below::::::::
+	// These are quorum endpoints. It is the endpoint that external clients should use.
 	api.router.HandleFunc("/kv/{key}/{value}", api.setKvHandler).Methods("POST")
 	api.router.HandleFunc("/kv/{key}", api.getKvHandler).Methods("GET")
 
+	// ::::::::Internal endpoints below::::::::
+	// These are direct store endpoints. It is not quorum based. It is used to avoid recursive forwarding.
+	// If we were to use quorum endpoint, it will trigger a quorum request to the same node which is not necessary.
+	// We can modify the message to have like flag to indicate if it is quorum request or not.
+	// But for simplicity, we are using different endpoints.
 	api.router.HandleFunc("/store/{key}/{value}", api.setStoreHandler).Methods("POST")
 	api.router.HandleFunc("/store/{key}", api.getStoreHandler).Methods("GET")
 
+	// These are shard endpoints. It is not quorum based.
 	api.router.HandleFunc("/shards/{key}", api.setShardHandler).Methods("POST")
 	api.router.HandleFunc("/shards", api.getShardHandler).Methods("GET")
 	return api
