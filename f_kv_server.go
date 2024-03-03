@@ -55,7 +55,7 @@ func (d *DistKVServer) handleMembershipChange(membershipChangeCh chan memberlist
 			switch event.Event {
 			case memberlist.NodeJoin:
 				d.ring.AddNode(httpAddress)
-				d.redistributePartitions(httpAddress)
+				d.redistributePartitions()
 				log.Printf("Node joined: %s", httpAddress)
 			case memberlist.NodeLeave:
 				d.ring.RemoveNode(httpAddress)
@@ -67,13 +67,17 @@ func (d *DistKVServer) handleMembershipChange(membershipChangeCh chan memberlist
 	}
 }
 
-func (d *DistKVServer) redistributePartitions(address string) {
+func (d *DistKVServer) redistributePartitions() {
 	for partitionId := range d.store.GetShards() {
 		newOwner := d.ring.ResolvePartitionOwnerNode(partitionId)
 		if newOwner != d.config.Host {
 			// send to newOwner
 			client := NewHttpClient(newOwner)
-			_ = client.PutAll(d.store.GetShard(partitionId))
+			err := client.PutAll(d.store.GetShard(partitionId))
+			if err != nil {
+				log.Printf("Failed to redistribute partition %d to %s: %v", partitionId, newOwner, err)
+				continue
+			}
 			log.Printf("Redistributing partition %d to %s", partitionId, newOwner)
 
 			// delete from old owner
