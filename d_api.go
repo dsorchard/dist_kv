@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"github.com/charmbracelet/log"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
+
+var httpLogger = log.WithPrefix("http")
 
 type HttpAPIServer struct {
 	router   *mux.Router
@@ -52,7 +54,7 @@ func (api *HttpAPIServer) getHandler(w http.ResponseWriter, r *http.Request) {
 		client := NewHttpClient(routeNodeAddress)
 		value, err := client.Get(key)
 		if err != nil {
-			log.Printf("Error forwarding request to %s: %v", routeNodeAddress, err)
+			httpLogger.Errorf("Error forwarding request to %s: %v", routeNodeAddress, err)
 			http.Error(w, "Error forwarding request", http.StatusInternalServerError)
 			return
 		}
@@ -74,7 +76,7 @@ func (api *HttpAPIServer) setHandler(w http.ResponseWriter, r *http.Request) {
 		client := NewHttpClient(routeNodeAddress)
 		err := client.Put(key, value)
 		if err != nil {
-			log.Printf("Error forwarding request to %s: %v", routeNodeAddress, err)
+			httpLogger.Errorf("Error forwarding request to %s: %v", routeNodeAddress, err)
 			http.Error(w, "Error forwarding request", http.StatusInternalServerError)
 			return
 		}

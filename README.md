@@ -31,3 +31,6 @@ curl -Ss -XPOST "http://localhost:9001/put/1/habibi"
 ```shell
 curl -Ss -XGET "http://localhost:8001/get/1" 
 ```
+
+### TODO
+- Redistribution

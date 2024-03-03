@@ -2,12 +2,15 @@ package main
 
 import (
 	"fmt"
+	"github.com/charmbracelet/log"
 	"github.com/hashicorp/memberlist"
 	"gopkg.in/yaml.v2"
-	"log"
 	"os"
 	"strings"
 )
+
+var distKvLogger = log.WithPrefix("dist-kv")
+var configLogger = log.WithPrefix("config")
 
 type DistKVServer struct {
 	config *configuration
@@ -19,7 +22,7 @@ type DistKVServer struct {
 func NewDistKVServer(config *configuration) *DistKVServer {
 	node, err := NewGossipMembership(config.InternalPort)
 	if err != nil {
-		log.Fatalf("Failed to create node: %v", err)
+		distKvLogger.Fatalf("Failed to create node: %v", err)
 	}
 
 	kv := NewMemStorageEngine()
@@ -40,7 +43,7 @@ func NewDistKVServer(config *configuration) *DistKVServer {
 func (d *DistKVServer) Bootstrap() {
 	err := d.node.Join(d.config.BootstrapNodes)
 	if err != nil {
-		log.Fatalf("Failed to join distKV: %v", err)
+		distKvLogger.Fatalf("Failed to join distKV: %v", err)
 	}
 
 	api := NewAPI(d, d.config.ExternalPort)
@@ -56,12 +59,12 @@ func (d *DistKVServer) handleMembershipChange(membershipChangeCh chan memberlist
 			case memberlist.NodeJoin:
 				d.ring.AddNode(httpAddress)
 				d.redistributePartitions()
-				log.Printf("Node joined: %s", httpAddress)
+				distKvLogger.Infof("Node joined: %s", httpAddress)
 			case memberlist.NodeLeave:
 				d.ring.RemoveNode(httpAddress)
-				log.Printf("Node left: %s", httpAddress)
+				distKvLogger.Infof("Node left: %s", httpAddress)
 			default:
-				log.Fatalf("Unknown event: %v", event.Event)
+				distKvLogger.Fatalf("Unknown event: %v", event.Event)
 			}
 		}
 	}
@@ -75,10 +78,10 @@ func (d *DistKVServer) redistributePartitions() {
 			client := NewHttpClient(newOwner)
 			err := client.PutAll(d.store.GetShard(partitionId))
 			if err != nil {
-				log.Printf("Failed to redistribute partition %d to %s: %v", partitionId, newOwner, err)
+				distKvLogger.Fatalf("Failed to redistribute partition %d to %s: %v", partitionId, newOwner, err)
 				continue
 			}
-			log.Printf("Redistributing partition %d to %s", partitionId, newOwner)
+			distKvLogger.Infof("Redistributing partition %d to %s", partitionId, newOwner)
 
 			// delete from old owner
 			d.store.DeleteShard(partitionId)
@@ -101,7 +104,7 @@ type configuration struct {
 }
 
 func loadConfig() *configuration {
-	log.Printf("Loading configurations from config.yml")
+	configLogger.Info("loading configurations from config.yml")
 
 	config := &configuration{
 		Host:                "0.0.0.0",
@@ -114,12 +117,12 @@ func loadConfig() *configuration {
 
 	data, err := os.ReadFile("z_config.yml")
 	if err != nil {
-		log.Fatalf("Cannot load config.yml")
+		configLogger.Fatal("Cannot load config.yml")
 	}
 
 	err = yaml.Unmarshal(data, config)
 	if err != nil {
-		log.Fatalf("Fail to unmarshal config.yml")
+		configLogger.Fatal("Failed to unmarshal config.yml")
 	}
 
 	for i, addr := range config.BootstrapNodes {
