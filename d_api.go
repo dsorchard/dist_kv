@@ -74,6 +74,25 @@ func (api *HttpAPIServer) setKvHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func (api *HttpAPIServer) getStoreHandler(w http.ResponseWriter, r *http.Request) {
+	key := mux.Vars(r)["key"]
+	shardId := api.distKV.ring.ResolvePartitionID(key)
+	value, ok := api.distKV.store.Get(shardId, key)
+	if !ok {
+		http.Error(w, "Key not found", http.StatusNotFound)
+		return
+	}
+	_, _ = w.Write([]byte(value))
+}
+
+func (api *HttpAPIServer) setStoreHandler(w http.ResponseWriter, r *http.Request) {
+	key := mux.Vars(r)["key"]
+	value := mux.Vars(r)["value"]
+	shardId := api.distKV.ring.ResolvePartitionID(key)
+	api.distKV.store.Set(shardId, key, value)
+	w.WriteHeader(http.StatusOK)
+}
+
 func (api *HttpAPIServer) getShardHandler(w http.ResponseWriter, r *http.Request) {
 
 	shards := api.distKV.store.GetShards()
@@ -99,24 +118,5 @@ func (api *HttpAPIServer) setShardHandler(w http.ResponseWriter, r *http.Request
 	defer r.Body.Close()
 
 	api.distKV.store.SetShard(shardId, shard)
-	w.WriteHeader(http.StatusOK)
-}
-
-func (api *HttpAPIServer) getStoreHandler(w http.ResponseWriter, r *http.Request) {
-	key := mux.Vars(r)["key"]
-	shardId := api.distKV.ring.ResolvePartitionID(key)
-	value, ok := api.distKV.store.Get(shardId, key)
-	if !ok {
-		http.Error(w, "Key not found", http.StatusNotFound)
-		return
-	}
-	_, _ = w.Write([]byte(value))
-}
-
-func (api *HttpAPIServer) setStoreHandler(w http.ResponseWriter, r *http.Request) {
-	key := mux.Vars(r)["key"]
-	value := mux.Vars(r)["value"]
-	shardId := api.distKV.ring.ResolvePartitionID(key)
-	api.distKV.store.Set(shardId, key, value)
 	w.WriteHeader(http.StatusOK)
 }
